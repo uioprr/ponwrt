@@ -1,0 +1,25 @@
+#!/bin/sh
+# PonWrt 首次启动：LAN 默认地址 10.1.1.1/24（DHCP 池沿用 100 起 / 150 条）
+#
+# 仅在出厂默认地址（空或 192.168.1.1/24）时改写，用户自定义地址不动。
+# 手动修改：uci set network.lan.ipaddr='10.1.1.1/24' && uci commit network && /etc/init.d/network restart
+
+[ -f /etc/config/network ] || exit 0
+uci -q get network.lan >/dev/null 2>&1 || exit 0
+
+cur="$(uci -q get network.lan.ipaddr)"
+
+case "$cur" in
+	""|"192.168.1.1/24"|"192.168.1.1")
+		uci -q set network.lan.ipaddr='10.1.1.1/24'
+		uci -q commit network
+		# DHCP 池对齐 10.1.1.0/24
+		if uci -q get dhcp.lan >/dev/null 2>&1; then
+			uci -q set dhcp.lan.start='100'
+			uci -q set dhcp.lan.limit='150'
+			uci -q commit dhcp
+		fi
+	;;
+esac
+
+exit 0

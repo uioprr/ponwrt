@@ -13,7 +13,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ponwrt-defaults
   SECTION:=base
   CATEGORY:=Base system
-  TITLE:=PonWrt default UCI settings (flow offload)
+  TITLE:=PonWrt default UCI settings (flow offload, LAN IP)
 endef
 
 PKGARCH:=all
@@ -30,6 +30,7 @@ endef
 define Package/ponwrt-defaults/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/99-ponwrt-flowoffload $(1)/etc/uci-defaults/99-ponwrt-flowoffload
+	$(INSTALL_BIN) ./files/99-ponwrt-lanip $(1)/etc/uci-defaults/99-ponwrt-lanip
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/ponwrt-offload $(1)/usr/sbin/ponwrt-offload
 endef
