@@ -1,0 +1,76 @@
+#!/bin/sh
+# PonWrt 首次启动：内核网络栈调优
+# 场景：AN7583 / 512MB 无 Zram / PPPoE 2.5G / OpenClash TPROXY
+# 说明：只追加缺失的 key，不覆盖用户已有配置
+
+CONF=/etc/sysctl.conf
+touch "$CONF"
+
+modprobe nf_conntrack 2>/dev/null
+
+add() {
+	key="${1%%=*}"
+	grep -qE "^[[:space:]]*$(printf '%s' "$key" | sed 's/[.[\*^$]/\\&/g')[[:space:]]*=" "$CONF" 2>/dev/null && return 0
+	echo "$1" >> "$CONF"
+}
+
+#### 内存管理（512MB 无 Zram）####
+add "vm.swappiness = 0"
+add "vm.min_free_kbytes = 32768"
+add "vm.overcommit_memory = 0"
+add "vm.vfs_cache_pressure = 150"
+add "vm.dirty_background_ratio = 5"
+add "vm.dirty_ratio = 10"
+add "vm.dirty_expire_centisecs = 3000"
+add "vm.dirty_writeback_centisecs = 500"
+add "kernel.panic = 10"
+
+#### 网络核心缓冲区 ####
+add "net.core.rmem_max = 4194304"
+add "net.core.wmem_max = 4194304"
+add "net.core.rmem_default = 131072"
+add "net.core.wmem_default = 131072"
+add "net.core.netdev_max_backlog = 2000"
+add "net.core.netdev_budget = 600"
+add "net.core.somaxconn = 4096"
+
+#### 游戏 / 代理 UDP 保活 ####
+add "net.netfilter.nf_conntrack_udp_timeout = 90"
+add "net.netfilter.nf_conntrack_udp_timeout_stream = 180"
+
+#### TCP 协议栈 ####
+add "net.ipv4.tcp_fastopen = 3"
+add "net.ipv4.tcp_tw_reuse = 1"
+add "net.ipv4.tcp_fin_timeout = 30"
+add "net.ipv4.tcp_keepalive_time = 600"
+add "net.ipv4.tcp_keepalive_intvl = 30"
+add "net.ipv4.tcp_keepalive_probes = 3"
+add "net.ipv4.tcp_mem = 8192 12288 16384"
+add "net.ipv4.tcp_rmem = 4096 131072 4194304"
+add "net.ipv4.tcp_wmem = 4096 131072 4194304"
+add "net.ipv4.tcp_max_tw_buckets = 16384"
+add "net.ipv4.tcp_syncookies = 1"
+add "net.ipv4.tcp_mtu_probing = 1"
+
+#### UDP 水位 ####
+add "net.ipv4.udp_mem = 8192 12288 16384"
+add "net.ipv4.udp_rmem_min = 16384"
+add "net.ipv4.udp_wmem_min = 16384"
+
+#### 连接追踪 ####
+add "net.netfilter.nf_conntrack_max = 65536"
+add "net.netfilter.nf_conntrack_tcp_timeout_established = 1200"
+add "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"
+add "net.netfilter.nf_conntrack_tcp_timeout_close_wait = 60"
+add "net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 60"
+
+#### 端口 / 邻居表 / 句柄 ####
+add "net.ipv4.ip_local_port_range = 1024 65535"
+add "net.ipv4.neigh.default.gc_thresh1 = 512"
+add "net.ipv4.neigh.default.gc_thresh2 = 2048"
+add "net.ipv4.neigh.default.gc_thresh3 = 4096"
+add "fs.file-max = 65536"
+
+sysctl -p >/dev/null 2>&1
+
+exit 0

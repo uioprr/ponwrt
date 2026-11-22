@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ponwrt-defaults
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
@@ -13,15 +13,15 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ponwrt-defaults
   SECTION:=base
   CATEGORY:=Base system
-  TITLE:=PonWrt default UCI settings (flow offload, LAN IP)
+  TITLE:=PonWrt default UCI/sysctl settings (flow offload, LAN IP, net tuning)
 endef
 
 PKGARCH:=all
 
 define Package/ponwrt-defaults/description
-  Ships uci-defaults that enable nftables flow offload (software + hardware)
-  on first boot, so PPPoE/LAN forwarding lands on the PPE engine instead of
-  the CPU.
+  Ships uci-defaults that enable nftables flow offload (software + hardware),
+  set LAN to 10.1.1.1/24, and apply kernel network tuning (buffers, conntrack,
+  UDP timeouts) on first boot.
 endef
 
 define Build/Compile
@@ -31,6 +31,7 @@ define Package/ponwrt-defaults/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/99-ponwrt-flowoffload $(1)/etc/uci-defaults/99-ponwrt-flowoffload
 	$(INSTALL_BIN) ./files/99-ponwrt-lanip $(1)/etc/uci-defaults/99-ponwrt-lanip
+	$(INSTALL_BIN) ./files/99-ponwrt-sysctl $(1)/etc/uci-defaults/99-ponwrt-sysctl
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/ponwrt-offload $(1)/usr/sbin/ponwrt-offload
 endef
