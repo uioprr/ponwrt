@@ -1,0 +1,27 @@
+#!/bin/sh
+# PonWrt flow offload 快捷开关
+# 用法: ponwrt-offload on|off|status
+# 说明: 使用 OpenClash 透明代理时必须 off，否则代理流量会被 PPE 绕过。
+
+case "$1" in
+	on)
+		uci -q set firewall.@defaults[0].flow_offloading='1'
+		uci -q set firewall.@defaults[0].flow_offloading_hw='1'
+		;;
+	off)
+		uci -q set firewall.@defaults[0].flow_offloading='0'
+		uci -q set firewall.@defaults[0].flow_offloading_hw='0'
+		;;
+	status)
+		echo "flow_offloading    = $(uci -q get firewall.@defaults[0].flow_offloading)"
+		echo "flow_offloading_hw = $(uci -q get firewall.@defaults[0].flow_offloading_hw)"
+		exit 0
+		;;
+	*)
+		echo "usage: ponwrt-offload on|off|status"
+		exit 1
+		;;
+esac
+
+uci -q commit firewall || exit 1
+/etc/init.d/firewall restart >/dev/null 2>&1 && echo "flow offload: $1 (firewall restarted)"

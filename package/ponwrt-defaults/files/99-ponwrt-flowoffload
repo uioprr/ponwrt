@@ -1,0 +1,18 @@
+#!/bin/sh
+# PonWrt 首次启动：默认开启 nftables flow offload（PPE 硬件转发）
+#
+# 注意：OpenClash 透明代理（TPROXY）与 flow offload 冲突，若已启用 OpenClash 则保持默认关闭。
+# 手动切换：/usr/sbin/ponwrt-offload on|off|status
+
+[ -f /etc/config/firewall ] || exit 0
+uci -q get firewall.@defaults[0] >/dev/null 2>&1 || exit 0
+
+if [ "$(uci -q get openclash.config.enable)" = "1" ]; then
+	exit 0
+fi
+
+uci -q set firewall.@defaults[0].flow_offloading='1'
+uci -q set firewall.@defaults[0].flow_offloading_hw='1'
+uci -q commit firewall
+
+exit 0
