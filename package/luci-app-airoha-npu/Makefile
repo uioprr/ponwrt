@@ -19,3 +19,8 @@ LUCI_DEPENDS:=+luci-base @TARGET_airoha
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
+
+# luci.mk 用 cp -pR 保留权限；显式声明 rpcd 插件 0755，避免安装后不可执行导致 RPC -32000 Object not found
+define Package/$(PKG_NAME)/postinst
+	chmod 0755 /usr/libexec/rpcd/luci.airoha_npu
+endef
