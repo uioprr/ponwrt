@@ -21,6 +21,9 @@ include $(TOPDIR)/feeds/luci/luci.mk
 # call BuildPackage - OpenWrt buildroot signature
 
 # luci.mk 用 cp -pR 保留权限；显式声明 rpcd 插件 0755，避免安装后不可执行导致 RPC -32000 Object not found
+# 注意：构建期 postinst 在宿主执行（prepare_rootfs: IPKG_INSTROOT=$(1) bash script），
+# 绝对路径会打到 runner 宿主机导致 chmod 失败、package/install 中断，必须拼 IPKG_INSTROOT。
 define Package/$(PKG_NAME)/postinst
-	chmod 0755 /usr/libexec/rpcd/luci.airoha_npu
+	[ ! -f $${IPKG_INSTROOT}/usr/libexec/rpcd/luci.airoha_npu ] || \
+		chmod 0755 $${IPKG_INSTROOT}/usr/libexec/rpcd/luci.airoha_npu
 endef
